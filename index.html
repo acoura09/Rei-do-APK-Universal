@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REI DO APK - UNIVERSAL COMBO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body { background: #0a0a0a; color: #e5e5e5; font-family: 'Inter', sans-serif; }
+        .srv-card { background: #121212; border: 1px solid #222; transition: all 0.3s ease; border-radius: 1rem; overflow: hidden; }
+        .srv-card:hover { border-color: #fbbf24; transform: scale(1.02); background: #181818; }
+        .loader { border: 3px solid #222; border-top: 3px solid #fbbf24; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="pb-10">
+
+    <nav class="sticky top-0 z-50 bg-black/90 backdrop-blur-md border-b border-white/10 p-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-black text-yellow-500 cursor-pointer" onclick="voltarAoMenu()">REI DO APK <span class="text-white">UNIVERSAL</span></h1>
+            <div id="nav-actions" class="hidden flex gap-4">
+                <button onclick="changeTab('live')" class="text-xs font-bold hover:text-yellow-500">CANAIS</button>
+                <button onclick="changeTab('vod')" class="text-xs font-bold hover:text-yellow-500">FILMES</button>
+                <button onclick="changeTab('series')" class="text-xs font-bold hover:text-yellow-500">SÉRIES</button>
+                <button onclick="voltarAoMenu()" class="text-xs bg-red-600 px-3 py-1 rounded-full font-bold">TROCAR DNS</button>
+            </div>
+        </div>
+    </nav>
+
+    <div id="screen-servers" class="max-w-6xl mx-auto px-6 py-12">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold">Selecione o Servidor</h2>
+            <p class="text-zinc-500 mt-2">Escolha uma das conexões configuradas abaixo:</p>
+        </div>
+        <div id="srv-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+    </div>
+
+    <div id="screen-content" class="hidden max-w-7xl mx-auto px-4 py-8">
+        <div id="status-srv" class="mb-6 flex items-center gap-2 text-sm text-yellow-500 font-mono font-bold uppercase"></div>
+        <div id="main-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4"></div>
+    </div>
+
+    <div id="player-modal" class="fixed inset-0 bg-black z-[100] hidden flex-col">
+        <div class="p-4 flex justify-between items-center bg-zinc-900 border-b border-white/10">
+            <span id="video-title" class="font-bold truncate pr-4 text-yellow-500">Reproduzindo...</span>
+            <button onclick="closePlayer()" class="bg-red-600 text-white px-6 py-1 rounded-full text-xs font-bold uppercase">Fechar Player</button>
+        </div>
+        <div class="flex-1 flex items-center justify-center bg-black">
+            <video id="main-video" controls class="w-full h-full max-h-[85vh]"></video>
+        </div>
+    </div>
+
+    <script>
+        // LISTA DE SERVIDORES (O BOOT ACEITA QUALQUER XTREAM CODES)
+        const COMBOS = [
+            { id: 1, nome: "SERVIDOR LAZER", dns: "http://zerohop.sbs:80", user: "6589065", pass: "8848432", icon: "tv" },
+            { id: 2, nome: "SERVER PREMIUM", dns: "http://dns-exemplo.com:8080", user: "seu_user", pass: "sua_senha", icon: "zap" },
+            { id: 3, nome: "SERVER VIP", dns: "https://dns-privado.net", user: "teste", pass: "teste", icon: "shield" }
+        ];
+
+        const PROXY = "https://api.allorigins.win/get?url=";
+        let srvAtivo = null;
+
+        // Formata a URL para garantir que não haja erros de digitação (barras duplas ou falta de http)
+        function formatDNS(url) {
+            let cleanUrl = url.replace(/\/+$/, ""); // Remove barra no final
+            if (!cleanUrl.startsWith('http')) cleanUrl = 'http://' + cleanUrl;
+            return cleanUrl;
+        }
+
+        function initMenu() {
+            const grid = document.getElementById('srv-grid');
+            grid.innerHTML = COMBOS.map(s => `
+                <div onclick="conectar(${s.id})" class="srv-card p-10 text-center cursor-pointer">
+                    <div class="mb-4 inline-block p-4 bg-yellow-500/10 rounded-full">
+                        <i data-lucide="${s.icon}" class="text-yellow-500 w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-xl font-bold">${s.nome}</h3>
+                    <p class="text-xs text-zinc-500 mt-2 uppercase tracking-widest">Conectar Agora</p>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        async function conectar(id) {
+            srvAtivo = {...COMBOS.find(x => x.id === id)};
+            srvAtivo.dns = formatDNS(srvAtivo.dns); // Normaliza o DNS selecionado
+            
+            document.getElementById('screen-servers').classList.add('hidden');
+            document.getElementById('screen-content').classList.remove('hidden');
+            document.getElementById('nav-actions').classList.remove('hidden');
+            document.getElementById('status-srv').innerText = `● ${srvAtivo.nome} | ONLINE`;
+            
+            changeTab('live');
+        }
+
+        async function changeTab(type) {
+            const grid = document.getElementById('main-grid');
+            grid.innerHTML = '<div class="col-span-full flex flex-col items-center py-20"><div class="loader mb-4"></div><p class="text-zinc-500">Sincronizando Categorias...</p></div>';
+            
+            const actions = { live: 'get_live_categories', vod: 'get_vod_categories', series: 'get_series_categories' };
+            const apiAddr = `${srvAtivo.dns}/player_api.php?username=${srvAtivo.user}&password=${srvAtivo.pass}&action=${actions[type]}`;
+            
+            try {
+                const res = await fetch(`${PROXY}${encodeURIComponent(apiAddr)}`);
+                const data = await res.json();
+                const cats = JSON.parse(data.contents);
+
+                if(!cats.length) throw new Error();
+
+                grid.innerHTML = cats.map(c => `
+                    <div onclick="carregarItens('${type}', '${c.category_id}')" class="bg-zinc-900 p-4 rounded-lg border border-zinc-800 hover:border-yellow-500 transition cursor-pointer">
+                        <p class="text-[10px] font-bold uppercase text-center truncate">${c.category_name}</p>
+                    </div>
+                `).join('');
+            } catch (e) {
+                grid.innerHTML = '<p class="col-span-full text-center text-red-500 bg-red-500/10 p-4 rounded">Este servidor não respondeu. Verifique se os dados de login estão ativos.</p>';
+            }
+        }
+
+        async function carregarItens(type, catId) {
+            const grid = document.getElementById('main-grid');
+            grid.innerHTML = '<div class="col-span-full flex flex-col items-center py-20"><div class="loader mb-4"></div><p class="text-zinc-500">Buscando Conteúdo...</p></div>';
+            
+            const action = type === 'live' ? 'get_live_streams' : type === 'vod' ? 'get_vod_streams' : 'get_series';
+            const apiAddr = `${srvAtivo.dns}/player_api.php?username=${srvAtivo.user}&password=${srvAtivo.pass}&action=${action}&category_id=${catId}`;
+            
+            try {
+                const res = await fetch(`${PROXY}${encodeURIComponent(apiAddr)}`);
+                const data = await res.json();
+                const itens = JSON.parse(data.contents);
+
+                grid.innerHTML = itens.map(i => {
+                    const thumb = i.stream_icon || i.cover || 'https://via.placeholder.com/300x450?text=SEM+IMAGEM';
+                    const id = i.stream_id || i.series_id;
+                    const nome = i.name || i.title;
+                    return `
+                        <div onclick="play('${id}', '${type}', '${nome.replace(/'/g, "")}')" class="srv-card group cursor-pointer">
+                            <div class="overflow-hidden"><img src="${thumb}" class="w-full aspect-[2/3] object-cover group-hover:scale-110 transition duration-500"></div>
+                            <div class="p-2 text-[10px] font-bold truncate bg-zinc-900 border-t border-white/5">${nome}</div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                grid.innerHTML = '<p class="col-span-full text-center">Nenhum item encontrado nesta categoria.</p>';
+            }
+        }
+
+        function play(id, type, nome) {
+            const modal = document.getElementById('player-modal');
+            const video = document.getElementById('main-video');
+            document.getElementById('video-title').innerText = nome;
+            
+            let ext = type === 'live' ? 'm3u8' : 'mp4';
+            let folder = type === 'live' ? 'live' : type === 'vod' ? 'movie' : 'series';
+            let url = `${srvAtivo.dns}/${folder}/${srvAtivo.user}/${srvAtivo.pass}/${id}.${ext}`;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            if (ext === 'm3u8' && Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+            } else {
+                video.src = url;
+                video.play().catch(() => {
+                    alert("Erro ao reproduzir: Este servidor pode exigir um player externo ou o link expirou.");
+                    closePlayer();
+                });
+            }
+        }
+
+        function closePlayer() {
+            const video = document.getElementById('main-video');
+            video.pause();
+            video.src = "";
+            document.getElementById('player-modal').classList.add('hidden');
+        }
+
+        function voltarAoMenu() {
+            document.getElementById('screen-servers').classList.remove('hidden');
+            document.getElementById('screen-content').classList.add('hidden');
+            document.getElementById('nav-actions').classList.add('hidden');
+            srvAtivo = null;
+        }
+
+        initMenu();
+    </script>
+</body>
+</html>
