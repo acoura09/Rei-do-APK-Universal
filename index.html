@@ -1,194 +1,562 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REI DO APK - UNIVERSAL COMBO</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <style>
-        body { background: #0a0a0a; color: #e5e5e5; font-family: 'Inter', sans-serif; }
-        .srv-card { background: #121212; border: 1px solid #222; transition: all 0.3s ease; border-radius: 1rem; overflow: hidden; }
-        .srv-card:hover { border-color: #fbbf24; transform: scale(1.02); background: #181818; }
-        .loader { border: 3px solid #222; border-top: 3px solid #fbbf24; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UniTV · Gerador Completo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
+  :root{
+    --bg:#0a0e14;--panel:#111820;--border:#1e3a4a;
+    --accent:#00d4ff;--accent2:#00ff88;--warn:#ff6b35;--danger:#ff3355;
+    --text:#c8d8e4;--dim:#4a6070;--glow:0 0 12px rgba(0,212,255,0.4);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:24px 16px;
+    background-image:radial-gradient(ellipse at 20% 20%,rgba(0,80,120,.12) 0%,transparent 60%),
+      radial-gradient(ellipse at 80% 80%,rgba(0,60,90,.10) 0%,transparent 60%)}
+  h1{font-size:1.5rem;font-weight:700;letter-spacing:3px;color:var(--accent);
+    text-shadow:var(--glow);text-transform:uppercase;margin-bottom:4px;text-align:center}
+  .subtitle{font-size:.8rem;color:var(--dim);letter-spacing:1px;margin-bottom:20px;
+    font-family:'Share Tech Mono',monospace;text-align:center}
+
+  /* ── TABS ── */
+  .tabs{display:flex;gap:0;width:100%;max-width:560px;margin-bottom:18px;
+    border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .tab{flex:1;padding:13px 8px;border:none;background:rgba(0,0,0,.3);
+    color:var(--dim);font-family:'Rajdhani',sans-serif;font-weight:700;
+    font-size:.85rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;
+    transition:all .2s;text-align:center}
+  .tab.active{background:linear-gradient(135deg,#007aaa,#00d4ff);color:#000}
+  .tab:first-child{border-right:1px solid var(--border)}
+
+  .tab-content{display:none;width:100%;max-width:560px}
+  .tab-content.active{display:block}
+
+  /* ── CARDS ── */
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+    padding:20px 22px;width:100%;margin-bottom:16px}
+  .card-title{font-size:.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--dim);
+    margin-bottom:12px;font-family:'Share Tech Mono',monospace}
+
+  label{display:block;font-size:.78rem;letter-spacing:1px;color:var(--dim);
+    margin-bottom:5px;text-transform:uppercase}
+
+  input[type=number],input[type=text]{width:100%;background:rgba(0,0,0,.4);
+    border:1px solid var(--border);border-radius:6px;padding:9px 13px;
+    color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:.92rem;
+    outline:none;transition:border-color .2s;margin-bottom:13px}
+  input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,212,255,.1)}
+  input.err{border-color:var(--danger)!important}
+
+  .toggle-row{display:flex;gap:8px;margin-bottom:13px}
+  .toggle-btn{flex:1;padding:9px 6px;border:1px solid var(--border);border-radius:6px;
+    background:rgba(0,0,0,.3);color:var(--dim);font-family:'Rajdhani',sans-serif;
+    font-weight:700;font-size:.82rem;letter-spacing:1px;text-transform:uppercase;
+    cursor:pointer;transition:all .18s;text-align:center}
+  .toggle-btn.active{border-color:var(--accent);color:var(--accent);
+    background:rgba(0,212,255,.08)}
+
+  /* ── BOXES ── */
+  .info-box{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--dim);
+    background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.12);
+    border-radius:6px;padding:9px 13px;margin-bottom:13px;line-height:1.85}
+  .info-box b{color:var(--accent)}
+  .info-box .val{color:var(--accent2)}
+
+  .warn-box{font-family:'Share Tech Mono',monospace;font-size:.7rem;
+    background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.25);
+    border-radius:6px;padding:9px 13px;margin-bottom:13px;line-height:1.85;color:var(--warn)}
+  .warn-box b{color:#ffaa80}
+
+  .path-box{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--dim);
+    background:rgba(0,0,0,.3);padding:9px 13px;border-radius:6px;
+    border-left:3px solid var(--accent);line-height:1.85;margin-bottom:13px}
+  .path-box b{color:var(--accent)}
+  .path-box .p{color:var(--accent2)}
+  .path-box .step{color:var(--text)}
+
+  /* ── BUTTONS ── */
+  .btn{width:100%;padding:12px;border:none;border-radius:7px;
+    font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;
+    letter-spacing:2px;text-transform:uppercase;cursor:pointer;
+    transition:all .18s;margin-bottom:9px}
+  .btn:last-child{margin-bottom:0}
+  .btn-primary{background:linear-gradient(135deg,#007aaa,#00d4ff);color:#000}
+  .btn-primary:hover{filter:brightness(1.15);transform:translateY(-1px)}
+  .btn-outline{background:transparent;border:1px solid var(--accent2);color:var(--accent2);opacity:.35;pointer-events:none}
+  .btn-outline.active{opacity:1;pointer-events:all}
+  .btn-outline.active:hover{background:rgba(0,255,136,.08)}
+  .btn:disabled{opacity:.3;pointer-events:none}
+
+  /* ── STATUS ── */
+  .status{font-family:'Share Tech Mono',monospace;font-size:.75rem;padding:8px 12px;
+    border-radius:5px;margin-bottom:10px;display:none}
+  .status.ok{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);
+    color:var(--accent2);display:block}
+  .status.err{background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.3);
+    color:var(--warn);display:block}
+
+  /* ── PREVIEW ── */
+  .preview-box{font-family:'Share Tech Mono',monospace;font-size:.74rem;
+    background:rgba(0,0,0,.5);border:1px dashed var(--border);border-radius:6px;
+    padding:12px;margin-bottom:13px;max-height:150px;overflow-y:auto;
+    line-height:1.85;color:var(--dim)}
+  .mac-val{color:var(--accent);font-weight:bold}
+  .file-lbl{color:var(--accent2)}
+
+  /* ── DOWNLOAD LIST ── */
+  #lista,#listaCfg{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+  .dl-item{background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:8px;
+    padding:10px 13px;display:flex;flex-wrap:wrap;justify-content:space-between;
+    align-items:center;gap:7px}
+  .dl-info{font-family:'Share Tech Mono',monospace;font-size:.7rem;line-height:1.7;flex:1;min-width:0}
+  .dl-info .fname{color:var(--accent2);font-weight:bold}
+  .dl-info .fmac{color:var(--accent)}
+  .dl-info .ftoken{color:var(--dim);word-break:break-all}
+  .dl-nota{width:100%;font-family:'Share Tech Mono',monospace;font-size:.66rem;
+    color:var(--warn);line-height:1.6}
+  .dl-nota b{color:var(--accent2)}
+  .dl-btn{flex-shrink:0;padding:7px 13px;border:none;border-radius:6px;
+    background:linear-gradient(135deg,#007aaa,#00d4ff);color:#000;
+    font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.82rem;
+    letter-spacing:1px;text-transform:uppercase;cursor:pointer;
+    text-decoration:none;display:inline-block;white-space:nowrap}
+  .dl-btn:hover{filter:brightness(1.15)}
+
+  .divider{border:none;border-top:1px solid var(--border);margin:4px 0 14px}
+  .step-badge{display:inline-block;background:var(--accent);color:#000;
+    font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.68rem;
+    padding:2px 7px;border-radius:20px;margin-right:5px}
+</style>
 </head>
-<body class="pb-10">
+<body>
 
-    <nav class="sticky top-0 z-50 bg-black/90 backdrop-blur-md border-b border-white/10 p-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-black text-yellow-500 cursor-pointer" onclick="voltarAoMenu()">REI DO APK <span class="text-white">UNIVERSAL</span></h1>
-            <div id="nav-actions" class="hidden flex gap-4">
-                <button onclick="changeTab('live')" class="text-xs font-bold hover:text-yellow-500">CANAIS</button>
-                <button onclick="changeTab('vod')" class="text-xs font-bold hover:text-yellow-500">FILMES</button>
-                <button onclick="changeTab('series')" class="text-xs font-bold hover:text-yellow-500">SÉRIES</button>
-                <button onclick="voltarAoMenu()" class="text-xs bg-red-600 px-3 py-1 rounded-full font-bold">TROCAR DNS</button>
-            </div>
-        </div>
-    </nav>
+<h1>⚙ UniTV · Gerador</h1>
+<p class="subtitle">cache.config.xml · .config · Protocolo Zero Dias</p>
 
-    <div id="screen-servers" class="max-w-6xl mx-auto px-6 py-12">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold">Selecione o Servidor</h2>
-            <p class="text-zinc-500 mt-2">Escolha uma das conexões configuradas abaixo:</p>
-        </div>
-        <div id="srv-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" id="tabRoot"    onclick="setTab('root')">🔒 Root Required</div>
+  <div class="tab"        id="tabNoRoot"  onclick="setTab('noroot')">📱 No Root</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- TAB ROOT                                               -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="tab-content active" id="contentRoot">
+
+  <!-- Caminho -->
+  <div class="card">
+    <div class="card-title">📁 Caminho Root</div>
+    <div class="path-box">
+      <b>Root required</b> · Acesso via gerenciador com root (MT Manager, MiXplorer)<br><br>
+      <span class="step">1</span> · Dispositivo<br>
+      <span class="step">2</span> · data<br>
+      <span class="step">3</span> · data<br>
+      <span class="step">4</span> · <span class="p">com.integration.unitvs5</span><br>
+      <span class="step">5</span> · <span class="p">shared_prefs</span><br><br>
+      Substitua o arquivo <b>cache.config.xml</b> pelo novo gerado.
+    </div>
+  </div>
+
+  <!-- Gerador Cache -->
+  <div class="card">
+    <div class="card-title">🔧 Gerador cache.config.xml</div>
+
+    <label>Quantidade de arquivos (1–500)</label>
+    <input type="number" id="cacheQty" value="1" min="1" max="500" oninput="atualizarCachePreview()">
+
+    <hr class="divider">
+
+    <label>Modo do MAC Address</label>
+    <div class="toggle-row">
+      <div class="toggle-btn active" id="btnCacheAleatorio" onclick="setCacheModo('aleatorio')">🎲 Aleatório</div>
+      <div class="toggle-btn"        id="btnCachePersonalizado" onclick="setCacheModo('personalizado')">✏️ Personalizado</div>
     </div>
 
-    <div id="screen-content" class="hidden max-w-7xl mx-auto px-4 py-8">
-        <div id="status-srv" class="mb-6 flex items-center gap-2 text-sm text-yellow-500 font-mono font-bold uppercase"></div>
-        <div id="main-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4"></div>
+    <div id="boxCacheAleatorio">
+      <div class="info-box">
+        Prefixo fixo <b>9c:00:D3</b> · 3 octetos <b>aleatórios</b> em minúsculas por arquivo
+      </div>
     </div>
 
-    <div id="player-modal" class="fixed inset-0 bg-black z-[100] hidden flex-col">
-        <div class="p-4 flex justify-between items-center bg-zinc-900 border-b border-white/10">
-            <span id="video-title" class="font-bold truncate pr-4 text-yellow-500">Reproduzindo...</span>
-            <button onclick="closePlayer()" class="bg-red-600 text-white px-6 py-1 rounded-full text-xs font-bold uppercase">Fechar Player</button>
-        </div>
-        <div class="flex-1 flex items-center justify-center bg-black">
-            <video id="main-video" controls class="w-full h-full max-h-[85vh]"></video>
-        </div>
+    <div id="boxCachePersonalizado" style="display:none">
+      <div class="warn-box">
+        <b>⚠</b> MACs já usados podem não funcionar corretamente. Use um MAC novo e inédito.
+      </div>
+      <label>MAC Address (xx:xx:xx:xx:xx:xx)</label>
+      <input type="text" id="macCacheCustom" placeholder="ex: 9c:00:D3:a4:f2:7e" maxlength="17"
+        oninput="formatarMacCache(this)">
     </div>
 
-    <script>
-        // LISTA DE SERVIDORES (O BOOT ACEITA QUALQUER XTREAM CODES)
-        const COMBOS = [
-            { id: 1, nome: "SERVIDOR LAZER", dns: "http://zerohop.sbs:80", user: "6589065", pass: "8848432", icon: "tv" },
-            { id: 2, nome: "SERVER PREMIUM", dns: "http://dns-exemplo.com:8080", user: "seu_user", pass: "sua_senha", icon: "zap" },
-            { id: 3, nome: "SERVER VIP", dns: "https://dns-privado.net", user: "teste", pass: "teste", icon: "shield" }
-        ];
+    <div class="preview-box" id="cachePreview">← Ajuste a quantidade acima</div>
+    <div id="cacheStatus" class="status"></div>
+    <button class="btn btn-primary" onclick="gerarCache()">⚡ Gerar cache.config.xml</button>
+    <button class="btn btn-outline" id="btnZip" onclick="downloadZip()">⬇ Baixar ZIP</button>
+  </div>
 
-        const PROXY = "https://api.allorigins.win/get?url=";
-        let srvAtivo = null;
+</div>
 
-        // Formata a URL para garantir que não haja erros de digitação (barras duplas ou falta de http)
-        function formatDNS(url) {
-            let cleanUrl = url.replace(/\/+$/, ""); // Remove barra no final
-            if (!cleanUrl.startsWith('http')) cleanUrl = 'http://' + cleanUrl;
-            return cleanUrl;
-        }
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- TAB NO ROOT                                            -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="tab-content" id="contentNoRoot">
 
-        function initMenu() {
-            const grid = document.getElementById('srv-grid');
-            grid.innerHTML = COMBOS.map(s => `
-                <div onclick="conectar(${s.id})" class="srv-card p-10 text-center cursor-pointer">
-                    <div class="mb-4 inline-block p-4 bg-yellow-500/10 rounded-full">
-                        <i data-lucide="${s.icon}" class="text-yellow-500 w-8 h-8"></i>
-                    </div>
-                    <h3 class="text-xl font-bold">${s.nome}</h3>
-                    <p class="text-xs text-zinc-500 mt-2 uppercase tracking-widest">Conectar Agora</p>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
+  <!-- Observação instalação -->
+  <div class="card">
+    <div class="card-title">📋 Preparação Necessária</div>
+    <div class="warn-box">
+      <b>⚠ Siga esta ordem corretamente:</b><br><br>
+      <b>1.</b> Gere e salve o arquivo <b>.config</b> abaixo<br>
+      <b>2.</b> Coloque o <b>.config</b> nos caminhos:<br>
+      &nbsp;&nbsp;&nbsp;📁 <b>/sdcard/</b><br>
+      &nbsp;&nbsp;&nbsp;📁 <b>/sdcard/Android/</b><br>
+      <b>3.</b> Instale a versão <b>UniTV Free 5.1.0.apk</b><br>
+      <b>4.</b> Abra o app — quando pedir para atualizar, <b>aceite</b><br>
+      <b>5.</b> O app criará automaticamente as pastas:<br>
+      &nbsp;&nbsp;&nbsp;📁 Alarms/system_c/ → <b>google.wav</b><br>
+      &nbsp;&nbsp;&nbsp;📁 Alarms/system_uf/ → <b>google.wav</b><br>
+      <b>6.</b> Somente após isso instale a versão <b>UniTV Free 5.5.0.apk</b>
+    </div>
+  </div>
 
-        async function conectar(id) {
-            srvAtivo = {...COMBOS.find(x => x.id === id)};
-            srvAtivo.dns = formatDNS(srvAtivo.dns); // Normaliza o DNS selecionado
-            
-            document.getElementById('screen-servers').classList.add('hidden');
-            document.getElementById('screen-content').classList.remove('hidden');
-            document.getElementById('nav-actions').classList.remove('hidden');
-            document.getElementById('status-srv').innerText = `● ${srvAtivo.nome} | ONLINE`;
-            
-            changeTab('live');
-        }
+  <!-- Caminho No Root -->
+  <div class="card">
+    <div class="card-title">📁 Caminhos No Root</div>
+    <div class="path-box">
+      <b>✔ Use apenas estes caminhos:</b><br><br>
+      <span class="p">/sdcard/Android/</span><br>
+      <span class="p">/sdcard/</span><br><br>
+      <b>Extensão:</b> <span class="p">.config</span> · sem root necessário
+    </div>
+  </div>
 
-        async function changeTab(type) {
-            const grid = document.getElementById('main-grid');
-            grid.innerHTML = '<div class="col-span-full flex flex-col items-center py-20"><div class="loader mb-4"></div><p class="text-zinc-500">Sincronizando Categorias...</p></div>';
-            
-            const actions = { live: 'get_live_categories', vod: 'get_vod_categories', series: 'get_series_categories' };
-            const apiAddr = `${srvAtivo.dns}/player_api.php?username=${srvAtivo.user}&password=${srvAtivo.pass}&action=${actions[type]}`;
-            
-            try {
-                const res = await fetch(`${PROXY}${encodeURIComponent(apiAddr)}`);
-                const data = await res.json();
-                const cats = JSON.parse(data.contents);
+  <!-- Gerador .config -->
+  <div class="card">
+    <div class="card-title">🔧 Gerador .config · Zero Dias</div>
 
-                if(!cats.length) throw new Error();
+    <label>Quantidade de arquivos (1–50)</label>
+    <input type="number" id="cfgQty" value="1" min="1" max="50">
 
-                grid.innerHTML = cats.map(c => `
-                    <div onclick="carregarItens('${type}', '${c.category_id}')" class="bg-zinc-900 p-4 rounded-lg border border-zinc-800 hover:border-yellow-500 transition cursor-pointer">
-                        <p class="text-[10px] font-bold uppercase text-center truncate">${c.category_name}</p>
-                    </div>
-                `).join('');
-            } catch (e) {
-                grid.innerHTML = '<p class="col-span-full text-center text-red-500 bg-red-500/10 p-4 rounded">Este servidor não respondeu. Verifique se os dados de login estão ativos.</p>';
-            }
-        }
+    <hr class="divider">
 
-        async function carregarItens(type, catId) {
-            const grid = document.getElementById('main-grid');
-            grid.innerHTML = '<div class="col-span-full flex flex-col items-center py-20"><div class="loader mb-4"></div><p class="text-zinc-500">Buscando Conteúdo...</p></div>';
-            
-            const action = type === 'live' ? 'get_live_streams' : type === 'vod' ? 'get_vod_streams' : 'get_series';
-            const apiAddr = `${srvAtivo.dns}/player_api.php?username=${srvAtivo.user}&password=${srvAtivo.pass}&action=${action}&category_id=${catId}`;
-            
-            try {
-                const res = await fetch(`${PROXY}${encodeURIComponent(apiAddr)}`);
-                const data = await res.json();
-                const itens = JSON.parse(data.contents);
+    <label>Modo do MAC Address</label>
+    <div class="toggle-row">
+      <div class="toggle-btn active" id="btnAleatorio" onclick="setModo('aleatorio')">🎲 Aleatório</div>
+      <div class="toggle-btn"        id="btnPersonalizado" onclick="setModo('personalizado')">✏️ Personalizado</div>
+    </div>
 
-                grid.innerHTML = itens.map(i => {
-                    const thumb = i.stream_icon || i.cover || 'https://via.placeholder.com/300x450?text=SEM+IMAGEM';
-                    const id = i.stream_id || i.series_id;
-                    const nome = i.name || i.title;
-                    return `
-                        <div onclick="play('${id}', '${type}', '${nome.replace(/'/g, "")}')" class="srv-card group cursor-pointer">
-                            <div class="overflow-hidden"><img src="${thumb}" class="w-full aspect-[2/3] object-cover group-hover:scale-110 transition duration-500"></div>
-                            <div class="p-2 text-[10px] font-bold truncate bg-zinc-900 border-t border-white/5">${nome}</div>
-                        </div>
-                    `;
-                }).join('');
-            } catch (e) {
-                grid.innerHTML = '<p class="col-span-full text-center">Nenhum item encontrado nesta categoria.</p>';
-            }
-        }
+    <div id="boxAleatorio">
+      <div class="info-box">
+        Prefixo fixo <b>9c:00:d3</b> · 3 octetos <b>aleatórios</b> por arquivo<br>
+        Cada arquivo tem MAC + token <b>único e inédito</b>
+      </div>
+    </div>
 
-        function play(id, type, nome) {
-            const modal = document.getElementById('player-modal');
-            const video = document.getElementById('main-video');
-            document.getElementById('video-title').innerText = nome;
-            
-            let ext = type === 'live' ? 'm3u8' : 'mp4';
-            let folder = type === 'live' ? 'live' : type === 'vod' ? 'movie' : 'series';
-            let url = `${srvAtivo.dns}/${folder}/${srvAtivo.user}/${srvAtivo.pass}/${id}.${ext}`;
+    <div id="boxPersonalizado" style="display:none">
+      <div class="warn-box">
+        <b>⚠</b> MACs já usados podem não gerar "zero dias". Use um MAC novo e inédito.
+      </div>
+      <label>MAC Address (xx:xx:xx:xx:xx:xx)</label>
+      <input type="text" id="macCustom" placeholder="ex: 9c:00:d3:a4:f2:7e" maxlength="17"
+        oninput="formatarMac(this)">
+    </div>
 
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+    <button class="btn btn-primary" onclick="gerarConfigs()">⚡ Gerar arquivos .config</button>
+    <div id="cfgStatus" class="status"></div>
+  </div>
 
-            if (ext === 'm3u8' && Hls.isSupported()) {
-                const hls = new Hls();
-                hls.loadSource(url);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
-            } else {
-                video.src = url;
-                video.play().catch(() => {
-                    alert("Erro ao reproduzir: Este servidor pode exigir um player externo ou o link expirou.");
-                    closePlayer();
-                });
-            }
-        }
+  <!-- Lista downloads .config -->
+  <div class="card" id="cardCfgLista" style="display:none">
+    <div class="card-title">⬇ Downloads</div>
+    <div id="listaCfg"></div>
+    <div style="margin-top:14px" class="path-box">
+      <b>✔ Salvar em:</b><br>
+      <span class="p">/sdcard/Android/</span><br>
+      <span class="p">/sdcard/</span><br><br>
+      <b>Extensão:</b> <span class="p">.config</span> · sem root necessário
+    </div>
+  </div>
 
-        function closePlayer() {
-            const video = document.getElementById('main-video');
-            video.pause();
-            video.src = "";
-            document.getElementById('player-modal').classList.add('hidden');
-        }
+</div><!-- /tab noroot -->
 
-        function voltarAoMenu() {
-            document.getElementById('screen-servers').classList.remove('hidden');
-            document.getElementById('screen-content').classList.add('hidden');
-            document.getElementById('nav-actions').classList.add('hidden');
-            srvAtivo = null;
-        }
+<script>
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function setTab(t) {
+  document.getElementById('tabRoot').classList.toggle('active',   t==='root');
+  document.getElementById('tabNoRoot').classList.toggle('active', t==='noroot');
+  document.getElementById('contentRoot').classList.toggle('active',   t==='root');
+  document.getElementById('contentNoRoot').classList.toggle('active', t==='noroot');
+}
 
-        initMenu();
-    </script>
+// ── MAC helpers ───────────────────────────────────────────────────────────────
+const h2  = () => Math.floor(Math.random()*256).toString(16).toLowerCase().padStart(2,'0');
+const H2  = () => Math.floor(Math.random()*256).toString(16).toUpperCase().padStart(2,'0');
+const macCache  = () => `9c:00:D3:${h2()}:${h2()}:${h2()}`;  // cache usa D maiúsculo
+const macConfig = () => `9c:00:d3:${h2()}:${h2()}:${h2()}`;  // config usa d minúsculo
+
+const CHARS   = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const randStr = n => Array.from({length:n},()=>CHARS[Math.floor(Math.random()*CHARS.length)]).join('');
+
+// ── CACHE: valores padrão ─────────────────────────────────────────────────────
+const D_UID  = '435617502';
+const D_CH   = 'ueefz7q8yzxw5xbz35rttr5goivm2icu';
+const D_COL  = '68143';
+const D_CVAL = '77151d8f-6ec5-11f0-82fd-891c0ba466faLiveDataV6;1754669882';
+
+// ── Preview cache ─────────────────────────────────────────────────────────────
+function atualizarCachePreview() {
+  const qty = modoCacheMAC==='personalizado'?1:
+    Math.min(Math.max(parseInt(document.getElementById('cacheQty').value)||1,1),500);
+  const lim = Math.min(qty,8);
+  let html = '<b style="color:var(--text)">ARQUIVOS (prévia):</b><br>';
+  for (let i=1;i<=lim;i++) {
+    const nome = qty===1 ? 'cache.config.xml' : `cache.config${i}.xml`;
+    const macLabel = modoCacheMAC==='personalizado'
+      ? (document.getElementById('macCacheCustom')?.value.trim() || 'personalizado')
+      : macCache();
+    html += `<span class="file-lbl">${nome}</span>  <span class="mac-val">[${macLabel}]</span><br>`;
+  }
+  if (qty>lim) html += `<span style="color:var(--dim)">... e mais ${qty-lim} arquivo(s)</span>`;
+  document.getElementById('cachePreview').innerHTML = html;
+}
+
+// ── Build XML cache ───────────────────────────────────────────────────────────
+function buildXml(mac, ts) {
+  return `<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+    <string name="live_last_channel_code">${D_CH}</string>
+    <int name="recommends_cache_time" value="96" />
+    <int name="all_Column_key" value="${D_COL}" />
+    <long name="service_time_column_10002" value="${ts+866}" />
+    <long name="service_time_column_10001" value="${ts+327}" />
+    <long name="service_time_column_10006" value="${ts+874}" />
+    <int name="live_last_column_id" value="${D_COL}" />
+    <string name="key_user_id">${D_UID}</string>
+    <string name="KEY_SP_SN">${mac}</string>
+    <string name="_free"></string>
+    <string name="_special"></string>
+    <string name="Special_root"></string>
+    <string name="SP_SN_BACKUP">${mac},1</string>
+    <int name="column_cache_time" value="65" />
+    <string name="_live"></string>
+    <string name="key_user_identity">4</string>
+    <int name="live_last_tab" value="3" />
+    <string name="_search"></string>
+    <long name="dcs_realtime" value="133681" />
+    <int name="heartbeat_cache_time" value="120" />
+    <string name="key_device_id_unitvfree">${D_UID}</string>
+    <string name="cache_key_recommend"></string>
+    <string name="${D_COL}">${D_CVAL}</string>
+    <string name="key_renew_flag">0</string>
+</map>`;
+}
+
+// ── ZIP (sem dependências) ────────────────────────────────────────────────────
+function u8(str){ return new TextEncoder().encode(str); }
+function crc32(data){
+  const t=new Uint32Array(256);
+  for(let i=0;i<256;i++){let c=i;for(let j=0;j<8;j++)c=c&1?(0xEDB88320^(c>>>1)):(c>>>1);t[i]=c;}
+  let c=0xFFFFFFFF;
+  for(let i=0;i<data.length;i++)c=t[(c^data[i])&0xFF]^(c>>>8);
+  return(c^0xFFFFFFFF)>>>0;
+}
+function le2(n){return[n&0xFF,(n>>8)&0xFF];}
+function le4(n){return[n&0xFF,(n>>8)&0xFF,(n>>16)&0xFF,(n>>24)&0xFF];}
+function buildZipData(files){
+  const now=new Date();
+  const dd=((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate();
+  const dt=(now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1);
+  const entries=[];let offset=0;
+  for(const f of files){
+    const nb=u8(f.name);const crc=crc32(f.data);const sz=f.data.length;
+    const lh=[0x50,0x4B,0x03,0x04,0x14,0x00,0x00,0x00,0x00,0x00,
+      ...le2(dt),...le2(dd),...le4(crc),...le4(sz),...le4(sz),...le2(nb.length),0x00,0x00,...nb];
+    const cd=[0x50,0x4B,0x01,0x02,0x1E,0x03,0x14,0x00,0x00,0x00,0x00,0x00,
+      ...le2(dt),...le2(dd),...le4(crc),...le4(sz),...le4(sz),
+      ...le2(nb.length),0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+      ...le4(offset),...nb];
+    entries.push({lh,data:f.data,cd});offset+=lh.length+sz;
+  }
+  const cdOff=offset;let cdSz=0;for(const e of entries)cdSz+=e.cd.length;
+  const eocd=[0x50,0x4B,0x05,0x06,0x00,0x00,0x00,0x00,
+    ...le2(files.length),...le2(files.length),...le4(cdSz),...le4(cdOff),0x00,0x00];
+  const parts=[];
+  for(const e of entries){parts.push(new Uint8Array(e.lh));parts.push(e.data);}
+  for(const e of entries)parts.push(new Uint8Array(e.cd));
+  parts.push(new Uint8Array(eocd));
+  const total=parts.reduce((a,p)=>a+p.length,0);
+  const out=new Uint8Array(total);let pos=0;
+  for(const p of parts){out.set(p,pos);pos+=p.length;}
+  return out;
+}
+function uint8ToBase64(u){let b='';for(let i=0;i<u.length;i++)b+=String.fromCharCode(u[i]);return btoa(b);}
+
+// ── Cache: modo MAC ──────────────────────────────────────────────────────────
+let modoCacheMAC = 'aleatorio';
+
+function setCacheModo(modo){
+  modoCacheMAC = modo;
+  document.getElementById('btnCacheAleatorio').classList.toggle('active',    modo==='aleatorio');
+  document.getElementById('btnCachePersonalizado').classList.toggle('active',modo==='personalizado');
+  document.getElementById('boxCacheAleatorio').style.display    = modo==='aleatorio'    ?'block':'none';
+  document.getElementById('boxCachePersonalizado').style.display= modo==='personalizado'?'block':'none';
+  const qty = document.getElementById('cacheQty');
+  if(modo==='personalizado'){qty.value=1;qty.disabled=true;}
+  else qty.disabled=false;
+  atualizarCachePreview();
+}
+
+function formatarMacCache(input){
+  let v=input.value.replace(/[^0-9a-fA-F]/g,'');
+  let fmt='';
+  for(let i=0;i<v.length&&i<12;i++){if(i>0&&i%2===0)fmt+=':';fmt+=v[i];}
+  input.value=fmt;
+  input.classList.toggle('err',fmt.length>0&&fmt.length<17);
+}
+
+// ── Gerar cache ───────────────────────────────────────────────────────────────
+let zipData = null;
+function gerarCache(){
+  const st=document.getElementById('cacheStatus');
+  // Validar MAC personalizado
+  if(modoCacheMAC==='personalizado'){
+    const mv=document.getElementById('macCacheCustom').value.trim();
+    if(!validarMac(mv)){
+      st.className='status err';
+      st.textContent='✗ MAC inválido. Use o formato xx:xx:xx:xx:xx:xx';
+      document.getElementById('macCacheCustom').classList.add('err');
+      return;
+    }
+  }
+  const qty=modoCacheMAC==='personalizado'?1:
+    Math.min(Math.max(parseInt(document.getElementById('cacheQty').value)||1,1),500);
+  const btn=document.getElementById('btnZip');
+  const files=[];const ts=Date.now();
+  for(let i=1;i<=qty;i++){
+    const mac=modoCacheMAC==='personalizado'
+      ?document.getElementById('macCacheCustom').value.trim()
+      :macCache();
+    const nome=qty===1?'cache.config.xml':`cache.config${i}.xml`;
+    files.push({name:nome,data:u8(buildXml(mac,ts+i))});
+  }
+  zipData=buildZipData(files);
+  st.className='status ok';
+  st.textContent=`✓ ${qty} arquivo(s) gerado(s) — clique em Baixar ZIP`;
+  btn.classList.add('active');
+  atualizarCachePreview();
+}
+function downloadZip(){
+  if(!zipData)return;
+  try{
+    const blob=new Blob([zipData],{type:'application/zip'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='pacote_cache.zip';a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }catch(e){
+    const a=document.createElement('a');
+    a.href='data:application/zip;base64,'+uint8ToBase64(zipData);
+    a.download='pacote_cache.zip';a.click();
+  }
+}
+
+// ── Config: modo MAC ──────────────────────────────────────────────────────────
+let modoMac = 'aleatorio';
+function setModo(modo){
+  modoMac=modo;
+  document.getElementById('btnAleatorio').classList.toggle('active',    modo==='aleatorio');
+  document.getElementById('btnPersonalizado').classList.toggle('active',modo==='personalizado');
+  document.getElementById('boxAleatorio').style.display    = modo==='aleatorio'    ?'block':'none';
+  document.getElementById('boxPersonalizado').style.display= modo==='personalizado'?'block':'none';
+  const qty=document.getElementById('cfgQty');
+  if(modo==='personalizado'){qty.value=1;qty.disabled=true;}
+  else qty.disabled=false;
+}
+
+function formatarMac(input){
+  let v=input.value.replace(/[^0-9a-fA-F]/g,'');
+  let fmt='';
+  for(let i=0;i<v.length&&i<12;i++){if(i>0&&i%2===0)fmt+=':';fmt+=v[i];}
+  input.value=fmt;
+  input.classList.toggle('err',fmt.length>0&&fmt.length<17);
+}
+
+function validarMac(mac){return /^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$/.test(mac);}
+
+// ── Build .config ─────────────────────────────────────────────────────────────
+function dataProtocolo(){
+  const dias=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const meses=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const d=new Date();
+  const hh=String(d.getHours()).padStart(2,'0');
+  const mm=String(d.getMinutes()).padStart(2,'0');
+  const ss=String(d.getSeconds()).padStart(2,'0');
+  return `${dias[d.getDay()]} ${String(d.getDate()).padStart(2,'0')} ${meses[d.getMonth()]} ${hh}:${mm}:${ss} GMT-03:00 ${d.getFullYear()}`;
+}
+
+function buildConfig(mac){
+  const clean=mac.replace(/:/g,'').toLowerCase();
+  const devId=btoa(clean);
+  const snFlag='4b704e6457377a575457493d';
+  const snToken='546e475362587449'+clean.slice(-8)+randStr(32);
+  return{
+    conteudo:`#personal info\n#${dataProtocolo()}\nkey_device_id_unitvfree=${devId}\nkey_sn_flag_unitvfree=${snFlag}\nkey_sn_token_unitvfree=${snToken}`,
+    devId,snToken,mac
+  };
+}
+
+// ── Gerar .config ─────────────────────────────────────────────────────────────
+function gerarConfigs(){
+  const st=document.getElementById('cfgStatus');
+  if(modoMac==='personalizado'){
+    const mv=document.getElementById('macCustom').value.trim();
+    if(!validarMac(mv)){
+      st.className='status err';
+      st.textContent='✗ MAC inválido. Use o formato xx:xx:xx:xx:xx:xx';
+      document.getElementById('macCustom').classList.add('err');
+      return;
+    }
+  }
+  const qty=modoMac==='personalizado'?1:
+    Math.min(Math.max(parseInt(document.getElementById('cfgQty').value)||1,1),50);
+  const lista=document.getElementById('listaCfg');
+  const card=document.getElementById('cardCfgLista');
+  lista.innerHTML='';
+
+  for(let i=1;i<=qty;i++){
+    const mac=modoMac==='personalizado'
+      ?document.getElementById('macCustom').value.trim().toLowerCase()
+      :macConfig();
+    const cfg=buildConfig(mac);
+    const nome=qty===1?'unitvfree.config.txt':`unitvfree${i}.config.txt`;
+    const b64=btoa(unescape(encodeURIComponent(cfg.conteudo)));
+    const uri='data:text/plain;charset=utf-8;base64,'+b64;
+
+    const div=document.createElement('div');
+    div.className='dl-item';
+    div.innerHTML=`
+      <div class="dl-info">
+        <div class="fname">${nome}</div>
+        <div class="fmac">${mac}</div>
+        <div class="ftoken">${cfg.snToken.substring(0,42)}...</div>
+      </div>
+      <div class="dl-nota">⚠ Após salvar, renomeie para <b>.config</b> (remova o .txt)</div>
+      <a class="dl-btn" href="${uri}" download="${nome}">⬇ Salvar</a>`;
+    lista.appendChild(div);
+  }
+
+  card.style.display='block';
+  st.className='status ok';
+  st.textContent=`✓ ${qty} arquivo(s) prontos — clique em ⬇ Salvar em cada um`;
+  card.scrollIntoView({behavior:'smooth'});
+}
+
+// Init
+atualizarCachePreview();
+</script>
 </body>
 </html>
