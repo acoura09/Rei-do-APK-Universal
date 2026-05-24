@@ -3,560 +3,804 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UniTV · Gerador Completo</title>
+<title>UNITV · Config Engine</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
-  :root{
-    --bg:#0a0e14;--panel:#111820;--border:#1e3a4a;
-    --accent:#00d4ff;--accent2:#00ff88;--warn:#ff6b35;--danger:#ff3355;
-    --text:#c8d8e4;--dim:#4a6070;--glow:0 0 12px rgba(0,212,255,0.4);
+  :root {
+    --bg:       #080b0f;
+    --surface:  #0e1318;
+    --border:   #1e2830;
+    --border-hi:#2a3a48;
+    --green:    #00e676;
+    --green-dim:#00b35a;
+    --green-bg: rgba(0,230,118,0.06);
+    --amber:    #ffab40;
+    --red:      #ff5252;
+    --muted:    #4a6070;
+    --text:     #b0c4cc;
+    --text-hi:  #e0eaef;
+    --mono:     'IBM Plex Mono', monospace;
+    --sans:     'IBM Plex Sans', sans-serif;
   }
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;
-    min-height:100vh;display:flex;flex-direction:column;align-items:center;
-    padding:24px 16px;
-    background-image:radial-gradient(ellipse at 20% 20%,rgba(0,80,120,.12) 0%,transparent 60%),
-      radial-gradient(ellipse at 80% 80%,rgba(0,60,90,.10) 0%,transparent 60%)}
-  h1{font-size:1.5rem;font-weight:700;letter-spacing:3px;color:var(--accent);
-    text-shadow:var(--glow);text-transform:uppercase;margin-bottom:4px;text-align:center}
-  .subtitle{font-size:.8rem;color:var(--dim);letter-spacing:1px;margin-bottom:20px;
-    font-family:'Share Tech Mono',monospace;text-align:center}
 
-  /* ── TABS ── */
-  .tabs{display:flex;gap:0;width:100%;max-width:560px;margin-bottom:18px;
-    border:1px solid var(--border);border-radius:10px;overflow:hidden}
-  .tab{flex:1;padding:13px 8px;border:none;background:rgba(0,0,0,.3);
-    color:var(--dim);font-family:'Rajdhani',sans-serif;font-weight:700;
-    font-size:.85rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;
-    transition:all .2s;text-align:center}
-  .tab.active{background:linear-gradient(135deg,#007aaa,#00d4ff);color:#000}
-  .tab:first-child{border-right:1px solid var(--border)}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .tab-content{display:none;width:100%;max-width:560px}
-  .tab-content.active{display:block}
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 40px 20px 60px;
+  }
 
-  /* ── CARDS ── */
-  .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;
-    padding:20px 22px;width:100%;margin-bottom:16px}
-  .card-title{font-size:.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--dim);
-    margin-bottom:12px;font-family:'Share Tech Mono',monospace}
+  /* ── Grid scanlines background ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,230,118,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,230,118,0.015) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 0;
+  }
 
-  label{display:block;font-size:.78rem;letter-spacing:1px;color:var(--dim);
-    margin-bottom:5px;text-transform:uppercase}
+  .wrapper { position: relative; z-index: 1; width: 100%; max-width: 620px; }
 
-  input[type=number],input[type=text]{width:100%;background:rgba(0,0,0,.4);
-    border:1px solid var(--border);border-radius:6px;padding:9px 13px;
-    color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:.92rem;
-    outline:none;transition:border-color .2s;margin-bottom:13px}
-  input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,212,255,.1)}
-  input.err{border-color:var(--danger)!important}
+  /* ── Header ── */
+  .header {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-box {
+    width: 40px; height: 40px;
+    background: var(--green-bg);
+    border: 1px solid var(--green-dim);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-box svg { width: 20px; height: 20px; }
+  .header-text h1 {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--green);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .header-text p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-family: var(--mono);
+  }
 
-  .toggle-row{display:flex;gap:8px;margin-bottom:13px}
-  .toggle-btn{flex:1;padding:9px 6px;border:1px solid var(--border);border-radius:6px;
-    background:rgba(0,0,0,.3);color:var(--dim);font-family:'Rajdhani',sans-serif;
-    font-weight:700;font-size:.82rem;letter-spacing:1px;text-transform:uppercase;
-    cursor:pointer;transition:all .18s;text-align:center}
-  .toggle-btn.active{border-color:var(--accent);color:var(--accent);
-    background:rgba(0,212,255,.08)}
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .card-section {
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-section:last-child { border-bottom: none; }
 
-  /* ── BOXES ── */
-  .info-box{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--dim);
-    background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.12);
-    border-radius:6px;padding:9px 13px;margin-bottom:13px;line-height:1.85}
-  .info-box b{color:var(--accent)}
-  .info-box .val{color:var(--accent2)}
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
 
-  .warn-box{font-family:'Share Tech Mono',monospace;font-size:.7rem;
-    background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.25);
-    border-radius:6px;padding:9px 13px;margin-bottom:13px;line-height:1.85;color:var(--warn)}
-  .warn-box b{color:#ffaa80}
+  /* ── MAC Input Row ── */
+  .mac-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--bg);
+    border: 1px solid var(--border-hi);
+    border-radius: 7px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .mac-row:focus-within {
+    border-color: var(--green-dim);
+    box-shadow: 0 0 0 3px rgba(0,230,118,0.08);
+  }
+  .mac-prefix {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--green);
+    padding: 13px 0 13px 16px;
+    white-space: nowrap;
+    user-select: none;
+    letter-spacing: 0.04em;
+  }
+  .mac-sep {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--green-dim);
+    padding: 13px 2px;
+    user-select: none;
+  }
+  #mac_input {
+    flex: 1;
+    padding: 13px 16px 13px 4px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-hi);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    width: 100%;
+    min-width: 0;
+  }
+  #mac_input::placeholder { color: var(--muted); font-weight: 400; }
+  .mac-hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 9px;
+    font-family: var(--mono);
+    padding-left: 2px;
+  }
+  .mac-hint span { color: var(--amber); }
 
-  .path-box{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--dim);
-    background:rgba(0,0,0,.3);padding:9px 13px;border-radius:6px;
-    border-left:3px solid var(--accent);line-height:1.85;margin-bottom:13px}
-  .path-box b{color:var(--accent)}
-  .path-box .p{color:var(--accent2)}
-  .path-box .step{color:var(--text)}
+  /* ── Generate Button ── */
+  #btn_gerar {
+    width: 100%;
+    padding: 15px;
+    background: var(--green);
+    border: none;
+    border-radius: 7px;
+    color: #050a06;
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  #btn_gerar:hover { background: #1aff8a; box-shadow: 0 0 20px rgba(0,230,118,0.3); }
+  #btn_gerar:active { transform: scale(0.98); }
+  #btn_gerar:disabled { background: var(--border-hi); color: var(--muted); cursor: not-allowed; box-shadow: none; }
+  #btn_gerar .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(5,10,6,0.3);
+    border-top-color: #050a06;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: none;
+  }
+  #btn_gerar.loading .spinner { display: block; }
+  #btn_gerar.loading .btn-text { opacity: 0.7; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── BUTTONS ── */
-  .btn{width:100%;padding:12px;border:none;border-radius:7px;
-    font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;
-    letter-spacing:2px;text-transform:uppercase;cursor:pointer;
-    transition:all .18s;margin-bottom:9px}
-  .btn:last-child{margin-bottom:0}
-  .btn-primary{background:linear-gradient(135deg,#007aaa,#00d4ff);color:#000}
-  .btn-primary:hover{filter:brightness(1.15);transform:translateY(-1px)}
-  .btn-outline{background:transparent;border:1px solid var(--accent2);color:var(--accent2);opacity:.35;pointer-events:none}
-  .btn-outline.active{opacity:1;pointer-events:all}
-  .btn-outline.active:hover{background:rgba(0,255,136,.08)}
-  .btn:disabled{opacity:.3;pointer-events:none}
+  /* ── Preview Panel ── */
+  #preview_section { display: none; }
+  #preview_section.visible { display: block; animation: fadeSlide 0.3s ease; }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 
-  /* ── STATUS ── */
-  .status{font-family:'Share Tech Mono',monospace;font-size:.75rem;padding:8px 12px;
-    border-radius:5px;margin-bottom:10px;display:none}
-  .status.ok{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);
-    color:var(--accent2);display:block}
-  .status.err{background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.3);
-    color:var(--warn);display:block}
+  .preview-file-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .preview-file-label .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+  }
 
-  /* ── PREVIEW ── */
-  .preview-box{font-family:'Share Tech Mono',monospace;font-size:.74rem;
-    background:rgba(0,0,0,.5);border:1px dashed var(--border);border-radius:6px;
-    padding:12px;margin-bottom:13px;max-height:150px;overflow-y:auto;
-    line-height:1.85;color:var(--dim)}
-  .mac-val{color:var(--accent);font-weight:bold}
-  .file-lbl{color:var(--accent2)}
+  .kv-list { display: flex; flex-direction: column; gap: 6px; }
+  .kv-row {
+    display: grid;
+    grid-template-columns: 200px 1fr auto;
+    gap: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    overflow: hidden;
+    align-items: stretch;
+    transition: border-color 0.15s;
+  }
+  .kv-row:hover { border-color: var(--border-hi); }
 
-  /* ── DOWNLOAD LIST ── */
-  #lista,#listaCfg{display:flex;flex-direction:column;gap:8px;margin-top:4px}
-  .dl-item{background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:8px;
-    padding:10px 13px;display:flex;flex-wrap:wrap;justify-content:space-between;
-    align-items:center;gap:7px}
-  .dl-info{font-family:'Share Tech Mono',monospace;font-size:.7rem;line-height:1.7;flex:1;min-width:0}
-  .dl-info .fname{color:var(--accent2);font-weight:bold}
-  .dl-info .fmac{color:var(--accent)}
-  .dl-info .ftoken{color:var(--dim);word-break:break-all}
-  .dl-nota{width:100%;font-family:'Share Tech Mono',monospace;font-size:.66rem;
-    color:var(--warn);line-height:1.6}
-  .dl-nota b{color:var(--accent2)}
-  .dl-btn{flex-shrink:0;padding:7px 13px;border:none;border-radius:6px;
-    background:linear-gradient(135deg,#007aaa,#00d4ff);color:#000;
-    font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.82rem;
-    letter-spacing:1px;text-transform:uppercase;cursor:pointer;
-    text-decoration:none;display:inline-block;white-space:nowrap}
-  .dl-btn:hover{filter:brightness(1.15)}
+  .kv-key {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--amber);
+    padding: 9px 12px;
+    border-right: 1px solid var(--border);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    background: rgba(255,171,64,0.04);
+  }
+  .kv-val {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-hi);
+    padding: 9px 12px;
+    word-break: break-all;
+    display: flex;
+    align-items: center;
+    line-height: 1.4;
+  }
+  .kv-val.mac { color: var(--green); font-weight: 600; }
+  .copy-btn {
+    padding: 9px 12px;
+    background: transparent;
+    border: none;
+    border-left: 1px solid var(--border);
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 11px;
+    transition: color 0.15s, background 0.15s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--mono);
+  }
+  .copy-btn:hover { color: var(--green); background: var(--green-bg); }
+  .copy-btn.copied { color: var(--green); }
 
-  .divider{border:none;border-top:1px solid var(--border);margin:4px 0 14px}
-  .step-badge{display:inline-block;background:var(--accent);color:#000;
-    font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.68rem;
-    padding:2px 7px;border-radius:20px;margin-right:5px}
+  /* ── File tree ── */
+  .file-tree {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 2;
+    padding: 2px 0;
+  }
+  .file-tree .dir  { color: var(--amber); }
+  .file-tree .file { color: var(--text); }
+  .file-tree .ok   { color: var(--green); margin-left: 6px; }
+
+  /* ── Status bar ── */
+  .status-bar {
+    margin-top: 16px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid transparent;
+  }
+  .status-bar.visible { display: flex; }
+  .status-bar.success { background: rgba(0,230,118,0.07); border-color: var(--green-dim); color: var(--green); }
+  .status-bar.error   { background: rgba(255,82,82,0.07); border-color: #c62828; color: var(--red); }
+  .status-bar.info    { background: rgba(255,171,64,0.06); border-color: #b36800; color: var(--amber); }
+
+  /* ── Instructions Panel ── */
+  .guide-card {
+    margin-top: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .guide-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .guide-header:hover { background: rgba(255,255,255,0.02); }
+  .guide-header-left {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .guide-header h2 {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .guide-header p {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+    font-family: var(--mono);
+  }
+  .chevron {
+    color: var(--muted);
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+  }
+  .guide-body {
+    display: none;
+  }
+  .guide-body.open {
+    display: block;
+    animation: fadeSlide 0.25s ease;
+  }
+  .guide-group {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .guide-group:last-child { border-bottom: none; }
+
+  .guide-group-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .guide-group-title.amber { color: var(--amber); }
+  .guide-group-title.blue  { color: #64b5f6; }
+  .guide-group-title.green { color: var(--green); }
+  .guide-group-title svg { flex-shrink: 0; }
+
+  .step-list { display: flex; flex-direction: column; gap: 8px; }
+  .step {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+  .step-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--border-hi);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-content {
+    font-size: 12.5px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .step-content strong {
+    color: var(--text-hi);
+    font-weight: 500;
+  }
+  .path-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--bg);
+    border: 1px solid var(--border-hi);
+    border-radius: 4px;
+    padding: 1px 7px;
+    color: var(--amber);
+    white-space: nowrap;
+    margin: 1px 1px;
+  }
+  .path-tag.green { color: var(--green); }
+  .step-note {
+    margin-top: 5px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+    padding-left: 1px;
+    border-left: 2px solid var(--border-hi);
+    padding-left: 8px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 28px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    line-height: 1.8;
+  }
+  .footer .ver { color: var(--border-hi); }
 </style>
 </head>
 <body>
 
-<h1>⚙ UniTV · Gerador</h1>
-<p class="subtitle">cache.config.xml · .config · Protocolo Zero Dias</p>
+<div class="wrapper">
 
-<!-- TABS -->
-<div class="tabs">
-  <div class="tab active" id="tabRoot"    onclick="setTab('root')">🔒 Root Required</div>
-  <div class="tab"        id="tabNoRoot"  onclick="setTab('noroot')">📱 No Root</div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- TAB ROOT                                               -->
-<!-- ══════════════════════════════════════════════════════ -->
-<div class="tab-content active" id="contentRoot">
-
-  <!-- Caminho -->
-  <div class="card">
-    <div class="card-title">📁 Caminho Root</div>
-    <div class="path-box">
-      <b>Root required</b> · Acesso via gerenciador com root (MT Manager, MiXplorer)<br><br>
-      <span class="step">1</span> · Dispositivo<br>
-      <span class="step">2</span> · data<br>
-      <span class="step">3</span> · data<br>
-      <span class="step">4</span> · <span class="p">com.integration.unitvs5</span><br>
-      <span class="step">5</span> · <span class="p">shared_prefs</span><br><br>
-      Substitua o arquivo <b>cache.config.xml</b> pelo novo gerado.
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-box">
+      <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="7" height="7" rx="1.5" fill="#00e676" opacity="0.9"/>
+        <rect x="11" y="2" width="7" height="7" rx="1.5" fill="#00e676" opacity="0.4"/>
+        <rect x="2" y="11" width="7" height="7" rx="1.5" fill="#00e676" opacity="0.4"/>
+        <rect x="11" y="11" width="7" height="7" rx="1.5" fill="#00e676" opacity="0.15"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>UNITV Config Engine</h1>
+      <p>Prefix-Lock 9C:00:D3 · SHA-256 · JSZip</p>
     </div>
   </div>
 
-  <!-- Gerador Cache -->
+  <!-- Main Card -->
   <div class="card">
-    <div class="card-title">🔧 Gerador cache.config.xml</div>
 
-    <label>Quantidade de arquivos (1–500)</label>
-    <input type="number" id="cacheQty" value="1" min="1" max="500" oninput="atualizarCachePreview()">
-
-    <hr class="divider">
-
-    <label>Modo do MAC Address</label>
-    <div class="toggle-row">
-      <div class="toggle-btn active" id="btnCacheAleatorio" onclick="setCacheModo('aleatorio')">🎲 Aleatório</div>
-      <div class="toggle-btn"        id="btnCachePersonalizado" onclick="setCacheModo('personalizado')">✏️ Personalizado</div>
+    <!-- Input Section -->
+    <div class="card-section">
+      <div class="section-label">Endereço MAC</div>
+      <div class="mac-row">
+        <span class="mac-prefix">9C:00:D3</span>
+        <span class="mac-sep">:</span>
+        <input type="text" id="mac_input" placeholder="AUTO  ou  XX:XX:XX" maxlength="8" autocomplete="off" spellcheck="false">
+      </div>
+      <p class="mac-hint">
+        Deixe vazio para octetos <span>aleatórios</span>. Formato: <span>E7:9A:B9</span>
+      </p>
     </div>
 
-    <div id="boxCacheAleatorio">
-      <div class="info-box">
-        Prefixo fixo <b>9c:00:D3</b> · 3 octetos <b>aleatórios</b> em minúsculas por arquivo
+    <!-- Action Section -->
+    <div class="card-section">
+      <button id="btn_gerar" onclick="gerarPacote()">
+        <div class="spinner"></div>
+        <svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span class="btn-text">Gerar &amp; Baixar UNITV_CONFIG.ZIP</span>
+      </button>
+
+      <div id="status_bar" class="status-bar">
+        <span id="status_icon">●</span>
+        <span id="status_msg"></span>
       </div>
     </div>
 
-    <div id="boxCachePersonalizado" style="display:none">
-      <div class="warn-box">
-        <b>⚠</b> MACs já usados podem não funcionar corretamente. Use um MAC novo e inédito.
+  </div>
+
+  <!-- Instructions Guide -->
+  <div class="guide-card">
+
+    <div class="guide-header" onclick="toggleGuide(this)">
+      <div class="guide-header-left">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a6070" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <div>
+          <h2>Guia de Instalação</h2>
+          <p>Pré-requisitos · Limpeza · Gerenciador</p>
+        </div>
       </div>
-      <label>MAC Address (xx:xx:xx:xx:xx:xx)</label>
-      <input type="text" id="macCacheCustom" placeholder="ex: 9c:00:D3:a4:f2:7e" maxlength="17"
-        oninput="formatarMacCache(this)">
+      <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
     </div>
 
-    <div class="preview-box" id="cachePreview">← Ajuste a quantidade acima</div>
-    <div id="cacheStatus" class="status"></div>
-    <button class="btn btn-primary" onclick="gerarCache()">⚡ Gerar cache.config.xml</button>
-    <button class="btn btn-outline" id="btnZip" onclick="downloadZip()">⬇ Baixar ZIP</button>
-  </div>
+    <div class="guide-body">
 
-</div>
-
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- TAB NO ROOT                                            -->
-<!-- ══════════════════════════════════════════════════════ -->
-<div class="tab-content" id="contentNoRoot">
-
-  <!-- Observação instalação -->
-  <div class="card">
-    <div class="card-title">📋 Preparação Necessária</div>
-    <div class="warn-box">
-      <b>⚠ Siga esta ordem corretamente:</b><br><br>
-      <b>1.</b> Gere e salve o arquivo <b>.config</b> abaixo<br>
-      <b>2.</b> Coloque o <b>.config</b> nos caminhos:<br>
-      &nbsp;&nbsp;&nbsp;📁 <b>/sdcard/</b><br>
-      &nbsp;&nbsp;&nbsp;📁 <b>/sdcard/Android/</b><br>
-      <b>3.</b> Instale a versão <b>UniTV Free 5.1.0.apk</b><br>
-      <b>4.</b> Abra o app — quando pedir para atualizar, <b>aceite</b><br>
-      <b>5.</b> O app criará automaticamente as pastas:<br>
-      &nbsp;&nbsp;&nbsp;📁 Alarms/system_c/ → <b>google.wav</b><br>
-      &nbsp;&nbsp;&nbsp;📁 Alarms/system_uf/ → <b>google.wav</b><br>
-      <b>6.</b> Somente após isso instale a versão <b>UniTV Free 5.5.0.apk</b>
-    </div>
-  </div>
-
-  <!-- Caminho No Root -->
-  <div class="card">
-    <div class="card-title">📁 Caminhos No Root</div>
-    <div class="path-box">
-      <b>✔ Use apenas estes caminhos:</b><br><br>
-      <span class="p">/sdcard/Android/</span><br>
-      <span class="p">/sdcard/</span><br><br>
-      <b>Extensão:</b> <span class="p">.config</span> · sem root necessário
-    </div>
-  </div>
-
-  <!-- Gerador .config -->
-  <div class="card">
-    <div class="card-title">🔧 Gerador .config · Zero Dias</div>
-
-    <label>Quantidade de arquivos (1–50)</label>
-    <input type="number" id="cfgQty" value="1" min="1" max="50">
-
-    <hr class="divider">
-
-    <label>Modo do MAC Address</label>
-    <div class="toggle-row">
-      <div class="toggle-btn active" id="btnAleatorio" onclick="setModo('aleatorio')">🎲 Aleatório</div>
-      <div class="toggle-btn"        id="btnPersonalizado" onclick="setModo('personalizado')">✏️ Personalizado</div>
-    </div>
-
-    <div id="boxAleatorio">
-      <div class="info-box">
-        Prefixo fixo <b>9c:00:d3</b> · 3 octetos <b>aleatórios</b> por arquivo<br>
-        Cada arquivo tem MAC + token <b>único e inédito</b>
+      <!-- Group 1: Cleanup -->
+      <div class="guide-group">
+        <div class="guide-group-title amber">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          </svg>
+          Limpeza — Para uma Nova Reinstalação
+        </div>
+        <div class="step-list">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <strong>Desinstale o aplicativo</strong> completamente pelo Android, não apenas "limpar dados".
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              Apague os arquivos de configuração anteriores:
+              <span class="path-tag">.config</span>
+              <span class="path-tag">.properties</span>
+              e a pasta <span class="path-tag">Alarms/system_uf</span> da raiz do armazenamento interno.
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              Também apague <span class="path-tag">Android/.config</span> dentro da pasta Android.
+              <div class="step-note">Deixar arquivos antigos pode causar conflito de IDs mesmo após reinstalação.</div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div id="boxPersonalizado" style="display:none">
-      <div class="warn-box">
-        <b>⚠</b> MACs já usados podem não gerar "zero dias". Use um MAC novo e inédito.
+      <!-- Group 2: Google Backup -->
+      <div class="guide-group">
+        <div class="guide-group-title amber">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          Google Backup — Restauração Automática
+        </div>
+        <div class="step-list">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              Acesse <strong>Configurações → Google → Backup</strong> e <strong>desative</strong> a opção "Restauração Automática de Apps".
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              Com essa opção ativa, ao reinstalar o app o Android pode restaurar automaticamente os dados antigos do backup — sobrescrevendo a nova configuração gerada.
+              <div class="step-note">Pode reativar após confirmar que os novos IDs estão funcionando corretamente.</div>
+            </div>
+          </div>
+        </div>
       </div>
-      <label>MAC Address (xx:xx:xx:xx:xx:xx)</label>
-      <input type="text" id="macCustom" placeholder="ex: 9c:00:d3:a4:f2:7e" maxlength="17"
-        oninput="formatarMac(this)">
-    </div>
 
-    <button class="btn btn-primary" onclick="gerarConfigs()">⚡ Gerar arquivos .config</button>
-    <div id="cfgStatus" class="status"></div>
+      <!-- Group 3: File Manager -->
+      <div class="guide-group">
+        <div class="guide-group-title green">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          Gerenciador de Arquivos — Arquivos Ocultos
+        </div>
+        <div class="step-list">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              No gerenciador de arquivos, ative <strong>"Mostrar arquivos ocultos"</strong> (arquivos iniciados com ponto <span class="path-tag green">.</span> ficam ocultos por padrão no Android).
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              Extraia o ZIP gerado e copie os arquivos para os caminhos corretos:
+              <br>
+              <span class="path-tag">/storage/emulated/0/.config</span>
+              <br>
+              <span class="path-tag">/storage/emulated/0/.properties</span>
+              <br>
+              <span class="path-tag">/storage/emulated/0/Android/.config</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              Confirme que os 3 arquivos estão visíveis no destino antes de abrir o app. Se não aparecerem, a opção de ocultos não está ativa.
+              <div class="step-note">Gerenciadores recomendados: MiXplorer, FX File Explorer, X-plore.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
-  <!-- Lista downloads .config -->
-  <div class="card" id="cardCfgLista" style="display:none">
-    <div class="card-title">⬇ Downloads</div>
-    <div id="listaCfg"></div>
-    <div style="margin-top:14px" class="path-box">
-      <b>✔ Salvar em:</b><br>
-      <span class="p">/sdcard/Android/</span><br>
-      <span class="p">/sdcard/</span><br><br>
-      <b>Extensão:</b> <span class="p">.config</span> · sem root necessário
-    </div>
+  <!-- Footer -->
+  <div class="footer">
+    <div>SHA-256 · crypto.subtle · JSZip 3.10.1</div>
+    <div class="ver">v3.0.0 · Prefix-Lock 9C:00:D3 · Double-Layer SHA256→B64→Hex</div>
   </div>
 
-</div><!-- /tab noroot -->
+</div><!-- /wrapper -->
 
 <script>
-// ── Tabs ──────────────────────────────────────────────────────────────────────
-function setTab(t) {
-  document.getElementById('tabRoot').classList.toggle('active',   t==='root');
-  document.getElementById('tabNoRoot').classList.toggle('active', t==='noroot');
-  document.getElementById('contentRoot').classList.toggle('active',   t==='root');
-  document.getElementById('contentNoRoot').classList.toggle('active', t==='noroot');
+// ─────────────────────────────────────────────
+//  Utilities — Double-Layer: SHA-256 → Base64 → Hex
+// ─────────────────────────────────────────────
+
+// Returns raw Uint8Array bytes of SHA-256
+async function sha256bytes(str) {
+  const buf = new TextEncoder().encode(str);
+  return new Uint8Array(await crypto.subtle.digest('SHA-256', buf));
 }
 
-// ── MAC helpers ───────────────────────────────────────────────────────────────
-const h2  = () => Math.floor(Math.random()*256).toString(16).toLowerCase().padStart(2,'0');
-const H2  = () => Math.floor(Math.random()*256).toString(16).toUpperCase().padStart(2,'0');
-const macCache  = () => `9c:00:D3:${h2()}:${h2()}:${h2()}`;  // cache usa D maiúsculo
-const macConfig = () => `9c:00:d3:${h2()}:${h2()}:${h2()}`;  // config usa d minúsculo
+// base64 encode a Uint8Array (browser-safe)
+function toBase64(bytes) {
+  return btoa(String.fromCharCode(...bytes));
+}
 
-const CHARS   = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-const randStr = n => Array.from({length:n},()=>CHARS[Math.floor(Math.random()*CHARS.length)]).join('');
+// hex encode a plain string (each char → 2 hex digits)
+function strToHex(str) {
+  return Array.from(str).map(c => c.charCodeAt(0).toString(16).padStart(2,'0')).join('');
+}
 
-// ── CACHE: valores padrão ─────────────────────────────────────────────────────
-const D_UID  = '435617502';
-const D_CH   = 'ueefz7q8yzxw5xbz35rttr5goivm2icu';
-const D_COL  = '68143';
-const D_CVAL = '77151d8f-6ec5-11f0-82fd-891c0ba466faLiveDataV6;1754669882';
+// Full pipeline: SHA-256(input)[:sliceBytes] → Base64 → Hex
+async function sha256_b64_hex(input, sliceBytes) {
+  const bytes  = await sha256bytes(input);
+  const sliced = bytes.slice(0, sliceBytes);
+  const b64    = toBase64(sliced);
+  return strToHex(b64);
+}
 
-// ── Preview cache ─────────────────────────────────────────────────────────────
-function atualizarCachePreview() {
-  const qty = modoCacheMAC==='personalizado'?1:
-    Math.min(Math.max(parseInt(document.getElementById('cacheQty').value)||1,1),500);
-  const lim = Math.min(qty,8);
-  let html = '<b style="color:var(--text)">ARQUIVOS (prévia):</b><br>';
-  for (let i=1;i<=lim;i++) {
-    const nome = qty===1 ? 'cache.config.xml' : `cache.config${i}.xml`;
-    const macLabel = modoCacheMAC==='personalizado'
-      ? (document.getElementById('macCacheCustom')?.value.trim() || 'personalizado')
-      : macCache();
-    html += `<span class="file-lbl">${nome}</span>  <span class="mac-val">[${macLabel}]</span><br>`;
+function randomOctet() {
+  return Math.floor(Math.random() * 256).toString(16).padStart(2,'0').toUpperCase();
+}
+
+function parseSuffix(raw) {
+  // Strip non-hex
+  const clean = raw.replace(/[^0-9A-Fa-f]/g,'');
+  if (clean.length >= 6) {
+    return clean.substring(0,6).match(/.{1,2}/g).join(':').toUpperCase();
   }
-  if (qty>lim) html += `<span style="color:var(--dim)">... e mais ${qty-lim} arquivo(s)</span>`;
-  document.getElementById('cachePreview').innerHTML = html;
+  return [randomOctet(), randomOctet(), randomOctet()].join(':');
 }
 
-// ── Build XML cache ───────────────────────────────────────────────────────────
-function buildXml(mac, ts) {
-  return `<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
-<map>
-    <string name="live_last_channel_code">${D_CH}</string>
-    <int name="recommends_cache_time" value="96" />
-    <int name="all_Column_key" value="${D_COL}" />
-    <long name="service_time_column_10002" value="${ts+866}" />
-    <long name="service_time_column_10001" value="${ts+327}" />
-    <long name="service_time_column_10006" value="${ts+874}" />
-    <int name="live_last_column_id" value="${D_COL}" />
-    <string name="key_user_id">${D_UID}</string>
-    <string name="KEY_SP_SN">${mac}</string>
-    <string name="_free"></string>
-    <string name="_special"></string>
-    <string name="Special_root"></string>
-    <string name="SP_SN_BACKUP">${mac},1</string>
-    <int name="column_cache_time" value="65" />
-    <string name="_live"></string>
-    <string name="key_user_identity">4</string>
-    <int name="live_last_tab" value="3" />
-    <string name="_search"></string>
-    <long name="dcs_realtime" value="133681" />
-    <int name="heartbeat_cache_time" value="120" />
-    <string name="key_device_id_unitvfree">${D_UID}</string>
-    <string name="cache_key_recommend"></string>
-    <string name="${D_COL}">${D_CVAL}</string>
-    <string name="key_renew_flag">0</string>
-</map>`;
+function setStatus(type, msg) {
+  const bar  = document.getElementById('status_bar');
+  const icon = document.getElementById('status_icon');
+  const text = document.getElementById('status_msg');
+  bar.className  = 'status-bar visible ' + type;
+  icon.textContent = type === 'success' ? '✓' : type === 'error' ? '✗' : '◎';
+  text.textContent = msg;
 }
 
-// ── ZIP (sem dependências) ────────────────────────────────────────────────────
-function u8(str){ return new TextEncoder().encode(str); }
-function crc32(data){
-  const t=new Uint32Array(256);
-  for(let i=0;i<256;i++){let c=i;for(let j=0;j<8;j++)c=c&1?(0xEDB88320^(c>>>1)):(c>>>1);t[i]=c;}
-  let c=0xFFFFFFFF;
-  for(let i=0;i<data.length;i++)c=t[(c^data[i])&0xFF]^(c>>>8);
-  return(c^0xFFFFFFFF)>>>0;
-}
-function le2(n){return[n&0xFF,(n>>8)&0xFF];}
-function le4(n){return[n&0xFF,(n>>8)&0xFF,(n>>16)&0xFF,(n>>24)&0xFF];}
-function buildZipData(files){
-  const now=new Date();
-  const dd=((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate();
-  const dt=(now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1);
-  const entries=[];let offset=0;
-  for(const f of files){
-    const nb=u8(f.name);const crc=crc32(f.data);const sz=f.data.length;
-    const lh=[0x50,0x4B,0x03,0x04,0x14,0x00,0x00,0x00,0x00,0x00,
-      ...le2(dt),...le2(dd),...le4(crc),...le4(sz),...le4(sz),...le2(nb.length),0x00,0x00,...nb];
-    const cd=[0x50,0x4B,0x01,0x02,0x1E,0x03,0x14,0x00,0x00,0x00,0x00,0x00,
-      ...le2(dt),...le2(dd),...le4(crc),...le4(sz),...le4(sz),
-      ...le2(nb.length),0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-      ...le4(offset),...nb];
-    entries.push({lh,data:f.data,cd});offset+=lh.length+sz;
-  }
-  const cdOff=offset;let cdSz=0;for(const e of entries)cdSz+=e.cd.length;
-  const eocd=[0x50,0x4B,0x05,0x06,0x00,0x00,0x00,0x00,
-    ...le2(files.length),...le2(files.length),...le4(cdSz),...le4(cdOff),0x00,0x00];
-  const parts=[];
-  for(const e of entries){parts.push(new Uint8Array(e.lh));parts.push(e.data);}
-  for(const e of entries)parts.push(new Uint8Array(e.cd));
-  parts.push(new Uint8Array(eocd));
-  const total=parts.reduce((a,p)=>a+p.length,0);
-  const out=new Uint8Array(total);let pos=0;
-  for(const p of parts){out.set(p,pos);pos+=p.length;}
-  return out;
-}
-function uint8ToBase64(u){let b='';for(let i=0;i<u.length;i++)b+=String.fromCharCode(u[i]);return btoa(b);}
-
-// ── Cache: modo MAC ──────────────────────────────────────────────────────────
-let modoCacheMAC = 'aleatorio';
-
-function setCacheModo(modo){
-  modoCacheMAC = modo;
-  document.getElementById('btnCacheAleatorio').classList.toggle('active',    modo==='aleatorio');
-  document.getElementById('btnCachePersonalizado').classList.toggle('active',modo==='personalizado');
-  document.getElementById('boxCacheAleatorio').style.display    = modo==='aleatorio'    ?'block':'none';
-  document.getElementById('boxCachePersonalizado').style.display= modo==='personalizado'?'block':'none';
-  const qty = document.getElementById('cacheQty');
-  if(modo==='personalizado'){qty.value=1;qty.disabled=true;}
-  else qty.disabled=false;
-  atualizarCachePreview();
+function hideStatus() {
+  document.getElementById('status_bar').className = 'status-bar';
 }
 
-function formatarMacCache(input){
-  let v=input.value.replace(/[^0-9a-fA-F]/g,'');
-  let fmt='';
-  for(let i=0;i<v.length&&i<12;i++){if(i>0&&i%2===0)fmt+=':';fmt+=v[i];}
-  input.value=fmt;
-  input.classList.toggle('err',fmt.length>0&&fmt.length<17);
+async function copyText(text, btn) {
+  try {
+    await navigator.clipboard.writeText(text);
+    const orig = btn.innerHTML;
+    btn.textContent = 'copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+  } catch { /* ignore */ }
 }
 
-// ── Gerar cache ───────────────────────────────────────────────────────────────
-let zipData = null;
-function gerarCache(){
-  const st=document.getElementById('cacheStatus');
-  // Validar MAC personalizado
-  if(modoCacheMAC==='personalizado'){
-    const mv=document.getElementById('macCacheCustom').value.trim();
-    if(!validarMac(mv)){
-      st.className='status err';
-      st.textContent='✗ MAC inválido. Use o formato xx:xx:xx:xx:xx:xx';
-      document.getElementById('macCacheCustom').classList.add('err');
-      return;
+// ─────────────────────────────────────────────
+//  Input auto-format: insert colons as user types
+// ─────────────────────────────────────────────
+document.getElementById('mac_input').addEventListener('input', function(e) {
+  let raw   = this.value.replace(/[^0-9A-Fa-f]/g,'').toUpperCase();
+  let parts = raw.match(/.{1,2}/g) || [];
+  this.value = parts.join(':').substring(0,8);
+});
+
+// ─────────────────────────────────────────────
+//  Core: generate + download
+// ─────────────────────────────────────────────
+async function gerarPacote() {
+  const btn = document.getElementById('btn_gerar');
+  hideStatus();
+
+  // Validate input
+  const rawInput = document.getElementById('mac_input').value;
+  const suffix   = parseSuffix(rawInput);
+  const finalMac = `9C:00:D3:${suffix}`;
+  const cleanMac = finalMac.replace(/:/g,'').toLowerCase();
+
+  // Loading state
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.querySelector('.btn-text').textContent = 'Calculando SHA-256...';
+  setStatus('info', `Gerando para MAC: ${finalMac}`);
+
+  try {
+    // ── Double-Layer: SHA-256 bytes → Base64 → Hex ──
+    // key_n_bt      : sha256[:24 bytes] → b64(32 chars) → hex = 64 chars
+    // key_device_id : sha256[:16 bytes] → b64(24 chars) → hex = 48 chars
+    // key_sn_token  : hex("TnGSbXtI" + b64(sha256[:18 bytes])) = 64 chars
+    const key_n_bt     = await sha256_b64_hex(cleanMac + 'nbtsalt_v5', 24);
+    const key_device_id = await sha256_b64_hex(cleanMac + 'dev', 16);
+    const authB64      = toBase64((await sha256bytes(cleanMac + 'auth')).slice(0, 18));
+    const key_sn_token = strToHex('TnGSbXtI' + authB64);
+
+    // ── Build file content (no mac_address — identity embedded nos hashes) ──
+    const timestamp = new Date().toUTCString();
+    const fileBody  =
+`#personal info
+#${timestamp}
+key_n_bt=${key_n_bt}
+key_device_id_unitvfree=${key_device_id}
+key_sn_token_unitvfree=${key_sn_token}`;
+
+    // ── Build ZIP ──
+    const zip = new JSZip();
+    zip.file('.config',         fileBody);
+    zip.file('.properties',     fileBody);
+    zip.folder('Android');
+    zip.file('Android/.config', fileBody);
+
+    const blob     = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    const filename = `UNITV_9C00D3_${suffix.replace(/:/g,'')}.zip`;
+
+    // ── Trigger download ──
+    const a  = document.createElement('a');
+    a.href   = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+
+    // ── Show success + open guide ──
+    setStatus('success', `${filename} gerado com sucesso · 3 arquivos`);
+    const guideBody = document.querySelector('.guide-body');
+    const chevron   = document.querySelector('.chevron');
+    if (guideBody && !guideBody.classList.contains('open')) {
+      guideBody.classList.add('open');
+      if (chevron) chevron.style.transform = 'rotate(180deg)';
     }
-  }
-  const qty=modoCacheMAC==='personalizado'?1:
-    Math.min(Math.max(parseInt(document.getElementById('cacheQty').value)||1,1),500);
-  const btn=document.getElementById('btnZip');
-  const files=[];const ts=Date.now();
-  for(let i=1;i<=qty;i++){
-    const mac=modoCacheMAC==='personalizado'
-      ?document.getElementById('macCacheCustom').value.trim()
-      :macCache();
-    const nome=qty===1?'cache.config.xml':`cache.config${i}.xml`;
-    files.push({name:nome,data:u8(buildXml(mac,ts+i))});
-  }
-  zipData=buildZipData(files);
-  st.className='status ok';
-  st.textContent=`✓ ${qty} arquivo(s) gerado(s) — clique em Baixar ZIP`;
-  btn.classList.add('active');
-  atualizarCachePreview();
-}
-function downloadZip(){
-  if(!zipData)return;
-  try{
-    const blob=new Blob([zipData],{type:'application/zip'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;a.download='pacote_cache.zip';a.click();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-  }catch(e){
-    const a=document.createElement('a');
-    a.href='data:application/zip;base64,'+uint8ToBase64(zipData);
-    a.download='pacote_cache.zip';a.click();
+
+  } catch (err) {
+    console.error(err);
+    setStatus('error', 'Falha na geração: ' + (err.message || 'erro desconhecido'));
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btn.querySelector('.btn-text').textContent = 'Gerar & Baixar UNITV_CONFIG.ZIP';
+    document.querySelector('.btn-icon').style.display = '';
   }
 }
 
-// ── Config: modo MAC ──────────────────────────────────────────────────────────
-let modoMac = 'aleatorio';
-function setModo(modo){
-  modoMac=modo;
-  document.getElementById('btnAleatorio').classList.toggle('active',    modo==='aleatorio');
-  document.getElementById('btnPersonalizado').classList.toggle('active',modo==='personalizado');
-  document.getElementById('boxAleatorio').style.display    = modo==='aleatorio'    ?'block':'none';
-  document.getElementById('boxPersonalizado').style.display= modo==='personalizado'?'block':'none';
-  const qty=document.getElementById('cfgQty');
-  if(modo==='personalizado'){qty.value=1;qty.disabled=true;}
-  else qty.disabled=false;
+// ── Allow Enter key to trigger generation ──
+document.getElementById('mac_input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') gerarPacote();
+});
+
+// ── Guide accordion ──
+function toggleGuide(header) {
+  const body    = header.nextElementSibling;
+  const chevron = header.querySelector('.chevron');
+  const isOpen  = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
-
-function formatarMac(input){
-  let v=input.value.replace(/[^0-9a-fA-F]/g,'');
-  let fmt='';
-  for(let i=0;i<v.length&&i<12;i++){if(i>0&&i%2===0)fmt+=':';fmt+=v[i];}
-  input.value=fmt;
-  input.classList.toggle('err',fmt.length>0&&fmt.length<17);
-}
-
-function validarMac(mac){return /^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$/.test(mac);}
-
-// ── Build .config ─────────────────────────────────────────────────────────────
-function dataProtocolo(){
-  const dias=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const meses=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const d=new Date();
-  const hh=String(d.getHours()).padStart(2,'0');
-  const mm=String(d.getMinutes()).padStart(2,'0');
-  const ss=String(d.getSeconds()).padStart(2,'0');
-  return `${dias[d.getDay()]} ${String(d.getDate()).padStart(2,'0')} ${meses[d.getMonth()]} ${hh}:${mm}:${ss} GMT-03:00 ${d.getFullYear()}`;
-}
-
-function buildConfig(mac){
-  const clean=mac.replace(/:/g,'').toLowerCase();
-  const devId=btoa(clean);
-  const snFlag='4b704e6457377a575457493d';
-  const snToken='546e475362587449'+clean.slice(-8)+randStr(32);
-  return{
-    conteudo:`#personal info\n#${dataProtocolo()}\nkey_device_id_unitvfree=${devId}\nkey_sn_flag_unitvfree=${snFlag}\nkey_sn_token_unitvfree=${snToken}`,
-    devId,snToken,mac
-  };
-}
-
-// ── Gerar .config ─────────────────────────────────────────────────────────────
-function gerarConfigs(){
-  const st=document.getElementById('cfgStatus');
-  if(modoMac==='personalizado'){
-    const mv=document.getElementById('macCustom').value.trim();
-    if(!validarMac(mv)){
-      st.className='status err';
-      st.textContent='✗ MAC inválido. Use o formato xx:xx:xx:xx:xx:xx';
-      document.getElementById('macCustom').classList.add('err');
-      return;
-    }
-  }
-  const qty=modoMac==='personalizado'?1:
-    Math.min(Math.max(parseInt(document.getElementById('cfgQty').value)||1,1),50);
-  const lista=document.getElementById('listaCfg');
-  const card=document.getElementById('cardCfgLista');
-  lista.innerHTML='';
-
-  for(let i=1;i<=qty;i++){
-    const mac=modoMac==='personalizado'
-      ?document.getElementById('macCustom').value.trim().toLowerCase()
-      :macConfig();
-    const cfg=buildConfig(mac);
-    const nome=qty===1?'unitvfree.config.txt':`unitvfree${i}.config.txt`;
-    const b64=btoa(unescape(encodeURIComponent(cfg.conteudo)));
-    const uri='data:text/plain;charset=utf-8;base64,'+b64;
-
-    const div=document.createElement('div');
-    div.className='dl-item';
-    div.innerHTML=`
-      <div class="dl-info">
-        <div class="fname">${nome}</div>
-        <div class="fmac">${mac}</div>
-        <div class="ftoken">${cfg.snToken.substring(0,42)}...</div>
-      </div>
-      <div class="dl-nota">⚠ Após salvar, renomeie para <b>.config</b> (remova o .txt)</div>
-      <a class="dl-btn" href="${uri}" download="${nome}">⬇ Salvar</a>`;
-    lista.appendChild(div);
-  }
-
-  card.style.display='block';
-  st.className='status ok';
-  st.textContent=`✓ ${qty} arquivo(s) prontos — clique em ⬇ Salvar em cada um`;
-  card.scrollIntoView({behavior:'smooth'});
-}
-
-// Init
-atualizarCachePreview();
 </script>
 </body>
 </html>
